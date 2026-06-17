@@ -11,10 +11,23 @@ class SlidingWindowRateLimiter:
         self.user_history: Dict[str, deque] = {}
 
     def _cleanup_window(self, user_id: str, current_time: float) -> None:
-        pass
+        if user_id not in self.user_history:
+            return
+        boundary_time = current_time - self.window_size
+        user_queue = self.user_history[user_id]
+        while user_queue and user_queue[0] <= boundary_time:
+            user_queue.popleft()
+        if not user_queue:
+            self.user_history.pop(user_id)
+    
 
     def can_send_message(self, user_id: str) -> bool:
-        return True
+        current_time = time.time()
+        self._cleanup_window(user_id, current_time)
+        if user_id not in self.user_history:
+            return True
+
+        return len(self.user_history[user_id]) < self.max_requests
 
     def record_message(self, user_id: str) -> bool:
         return True
