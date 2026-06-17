@@ -58,6 +58,18 @@ def range_sum_no_cache(array, left, right):
 def update_no_cache(array, index, value):
     array[index] = value
 
+def range_sum_with_cache(array, left, right):
+    key = (left, right)
+    cached_result = cache_system.get(key)
+    if cached_result != -1:
+        return cached_result
+    result = sum(array[left : right +1])
+    cache_system.put(key, result)
+    return result
+def update_with_cache(array, index, value):
+    array[index] = value
+    cache_system.invalidate_index(index)
+    
 if __name__ == "__main__":
         test_queries = make_queries(100000, 50000)
         print("--- Перевірка запуску скрипта ---")
