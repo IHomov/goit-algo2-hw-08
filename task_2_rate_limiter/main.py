@@ -30,11 +30,26 @@ class SlidingWindowRateLimiter:
         return len(self.user_history[user_id]) < self.max_requests
 
     def record_message(self, user_id: str) -> bool:
-        return True
+        current_time = time.time()
+        if self.can_send_message(user_id):
+            if user_id not in self.user_history:
+                self.user_history[user_id] = deque()
+            self.user_history[user_id].append(current_time)
+            return True
+        return False
 
     def time_until_next_allowed(self, user_id: str) -> float:
-        return 0.0
+        current_time = time.time()
+        self._cleanup_window(user_id, current_time)
 
+        if user_id not in self.user_history or len(self.user_history[user_id]) < self.max_requests:
+            return 0.0
+
+        oldest_message_time = self.user_history[user_id][0]
+        wait_time = (oldest_message_time + self.window_size) - current_time
+        
+        return max(0.0, wait_time)
+        
 # --- Демонстрація роботи (шаблон ментора) ---
 def test_rate_limiter():
     limiter = SlidingWindowRateLimiter(window_size=10, max_requests=1)
